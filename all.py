@@ -168,3 +168,377 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = '*********'
 EMAIL_HOST_PASSWORD = '*********'
+
+
+from django.urls import path
+
+from django.contrib.auth import views as auth_views
+
+from . import views
+
+
+
+urlpatterns = [
+	path('register/', views.registerPage, name="register"),
+	path('login/', views.loginPage, name="login"),  
+	path('logout/', views.logoutUser, name="logout"),
+
+    path('', views.home, name="home"),
+    path('user/', views.userPage, name="user-page"),
+
+    path('account/', views.accountSettings, name="account"),
+
+    path('products/', views.products, name='products'),
+    path('customer/<str:pk_test>/', views.customer, name="customer"),
+
+    path('create_order/<str:pk>/', views.createOrder, name="create_order"),
+    path('update_order/<str:pk>/', views.updateOrder, name="update_order"),
+    path('delete_order/<str:pk>/', views.deleteOrder, name="delete_order"),
+
+    path('reset_password/',
+     auth_views.PasswordResetView.as_view(template_name="accounts/password_reset.html"),
+     name="reset_password"),
+
+    path('reset_password_sent/', 
+        auth_views.PasswordResetDoneView.as_view(template_name="accounts/password_reset_sent.html"), 
+        name="password_reset_done"),
+
+    path('reset/<uidb64>/<token>/',
+     auth_views.PasswordResetConfirmView.as_view(template_name="accounts/password_reset_form.html"), 
+     name="password_reset_confirm"),
+
+    path('reset_password_complete/', 
+        auth_views.PasswordResetCompleteView.as_view(template_name="accounts/password_reset_done.html"), 
+        name="password_reset_complete"),
+
+
+
+]
+
+'''
+1 - Submit email form                         //PasswordResetView.as_view()
+2 - Email sent success message                //PasswordResetDoneView.as_view()
+3 - Link to password Rest form in email       //PasswordResetConfirmView.as_view()
+4 - Password successfully changed message     //PasswordResetCompleteView.as_view()
+'''
+
+from django.urls import path
+
+from django.contrib.auth import views as auth_views
+
+from . import views
+
+
+
+urlpatterns = [
+	path('register/', views.registerPage, name="register"),
+	path('login/', views.loginPage, name="login"),  
+	path('logout/', views.logoutUser, name="logout"),
+
+    path('', views.home, name="home"),
+    path('user/', views.userPage, name="user-page"),
+
+    path('account/', views.accountSettings, name="account"),
+
+    path('products/', views.products, name='products'),
+    path('customer/<str:pk_test>/', views.customer, name="customer"),
+
+    path('create_order/<str:pk>/', views.createOrder, name="create_order"),
+    path('update_order/<str:pk>/', views.updateOrder, name="update_order"),
+    path('delete_order/<str:pk>/', views.deleteOrder, name="delete_order"),
+
+    path('reset_password/',
+     auth_views.PasswordResetView.as_view(template_name="accounts/password_reset.html"),
+     name="reset_password"),
+
+    path('reset_password_sent/', 
+        auth_views.PasswordResetDoneView.as_view(template_name="accounts/password_reset_sent.html"), 
+        name="password_reset_done"),
+
+    path('reset/<uidb64>/<token>/',
+     auth_views.PasswordResetConfirmView.as_view(template_name="accounts/password_reset_form.html"), 
+     name="password_reset_confirm"),
+
+    path('reset_password_complete/', 
+        auth_views.PasswordResetCompleteView.as_view(template_name="accounts/password_reset_done.html"), 
+        name="password_reset_complete"),
+
+
+
+]
+
+'''
+1 - Submit email form                         //PasswordResetView.as_view()
+2 - Email sent success message                //PasswordResetDoneView.as_view()
+3 - Link to password Rest form in email       //PasswordResetConfirmView.as_view()
+4 - Password successfully changed message     //PasswordResetCompleteView.as_view()
+'''
+
+from django.db import models
+from django.contrib.auth.models import User
+
+# Create your models here.
+
+class Customer(models.Model):
+	user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
+	name = models.CharField(max_length=200, null=True)
+	phone = models.CharField(max_length=200, null=True)
+	email = models.CharField(max_length=200, null=True)
+	profile_pic = models.ImageField(default="profile1.png", null=True, blank=True)
+	date_created = models.DateTimeField(auto_now_add=True, null=True)
+
+	def __str__(self):
+		return self.name
+
+
+class Tag(models.Model):
+	name = models.CharField(max_length=200, null=True)
+
+	def __str__(self):
+		return self.name
+
+class Product(models.Model):
+	CATEGORY = (
+			('Indoor', 'Indoor'),
+			('Out Door', 'Out Door'),
+			) 
+
+	name = models.CharField(max_length=200, null=True)
+	price = models.FloatField(null=True)
+	category = models.CharField(max_length=200, null=True, choices=CATEGORY)
+	description = models.CharField(max_length=200, null=True, blank=True)
+	date_created = models.DateTimeField(auto_now_add=True, null=True)
+	tags = models.ManyToManyField(Tag)
+
+	def __str__(self):
+		return self.name
+
+class Order(models.Model):
+	STATUS = (
+			('Pending', 'Pending'),
+			('Out for delivery', 'Out for delivery'),
+			('Delivered', 'Delivered'),
+			)
+
+	customer = models.ForeignKey(Customer, null=True, on_delete= models.SET_NULL)
+	product = models.ForeignKey(Product, null=True, on_delete= models.SET_NULL)
+	date_created = models.DateTimeField(auto_now_add=True, null=True)
+	status = models.CharField(max_length=200, null=True, choices=STATUS)
+	note = models.CharField(max_length=1000, null=True)
+
+	def __str__(self):
+		return self.product.name
+
+
+from django.forms import ModelForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django import forms
+
+from .models import *
+
+class CustomerForm(ModelForm):
+	class Meta:
+		model = Customer
+		fields = '__all__'
+		exclude = ['user']
+
+class OrderForm(ModelForm):
+	class Meta:
+		model = Order
+		fields = '__all__'
+
+
+class CreateUserForm(UserCreationForm):
+	class Meta:
+		model = User
+		fields = ['username', 'email', 'password1', 'password2']
+
+        from django.contrib import admin
+
+# Register your models here.
+
+from .models import *
+
+admin.site.register(Customer)
+admin.site.register(Product)
+admin.site.register(Tag)
+admin.site.register(Order)
+
+from django.shortcuts import render, redirect 
+from django.http import HttpResponse
+from django.forms import inlineformset_factory
+from django.contrib.auth.forms import UserCreationForm
+
+from django.contrib.auth import authenticate, login, logout
+
+from django.contrib import messages
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
+
+# Create your views here.
+from .models import *
+from .forms import OrderForm, CreateUserForm, CustomerForm
+from .filters import OrderFilter
+from .decorators import unauthenticated_user, allowed_users, admin_only
+
+@unauthenticated_user
+def registerPage(request):
+
+	form = CreateUserForm()
+	if request.method == 'POST':
+		form = CreateUserForm(request.POST)
+		if form.is_valid():
+			user = form.save()
+			username = form.cleaned_data.get('username')
+
+
+			messages.success(request, 'Account was created for ' + username)
+
+			return redirect('login')
+		
+
+	context = {'form':form}
+	return render(request, 'accounts/register.html', context)
+
+@unauthenticated_user
+def loginPage(request):
+
+	if request.method == 'POST':
+		username = request.POST.get('username')
+		password =request.POST.get('password')
+
+		user = authenticate(request, username=username, password=password)
+
+		if user is not None:
+			login(request, user)
+			return redirect('home')
+		else:
+			messages.info(request, 'Username OR password is incorrect')
+
+	context = {}
+	return render(request, 'accounts/login.html', context)
+
+def logoutUser(request):
+	logout(request)
+	return redirect('login')
+
+@login_required(login_url='login')
+@admin_only
+def home(request):
+	orders = Order.objects.all()
+	customers = Customer.objects.all()
+
+	total_customers = customers.count()
+
+	total_orders = orders.count()
+	delivered = orders.filter(status='Delivered').count()
+	pending = orders.filter(status='Pending').count()
+
+	context = {'orders':orders, 'customers':customers,
+	'total_orders':total_orders,'delivered':delivered,
+	'pending':pending }
+
+	return render(request, 'accounts/dashboard.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['customer'])
+def userPage(request):
+	orders = request.user.customer.order_set.all()
+
+	total_orders = orders.count()
+	delivered = orders.filter(status='Delivered').count()
+	pending = orders.filter(status='Pending').count()
+
+	print('ORDERS:', orders)
+
+	context = {'orders':orders, 'total_orders':total_orders,
+	'delivered':delivered,'pending':pending}
+	return render(request, 'accounts/user.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['customer'])
+def accountSettings(request):
+	customer = request.user.customer
+	form = CustomerForm(instance=customer)
+
+	if request.method == 'POST':
+		form = CustomerForm(request.POST, request.FILES,instance=customer)
+		if form.is_valid():
+			form.save()
+
+
+	context = {'form':form}
+	return render(request, 'accounts/account_settings.html', context)
+
+
+
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def products(request):
+	products = Product.objects.all()
+
+	return render(request, 'accounts/products.html', {'products':products})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def customer(request, pk_test):
+	customer = Customer.objects.get(id=pk_test)
+
+	orders = customer.order_set.all()
+	order_count = orders.count()
+
+	myFilter = OrderFilter(request.GET, queryset=orders)
+	orders = myFilter.qs 
+
+	context = {'customer':customer, 'orders':orders, 'order_count':order_count,
+	'myFilter':myFilter}
+	return render(request, 'accounts/customer.html',context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def createOrder(request, pk):
+	OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status'), extra=10 )
+	customer = Customer.objects.get(id=pk)
+	formset = OrderFormSet(queryset=Order.objects.none(),instance=customer)
+	#form = OrderForm(initial={'customer':customer})
+	if request.method == 'POST':
+		#print('Printing POST:', request.POST)
+		form = OrderForm(request.POST)
+		formset = OrderFormSet(request.POST, instance=customer)
+		if formset.is_valid():
+			formset.save()
+			return redirect('/')
+
+	context = {'form':formset}
+	return render(request, 'accounts/order_form.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def updateOrder(request, pk):
+	order = Order.objects.get(id=pk)
+	form = OrderForm(instance=order)
+	print('ORDER:', order)
+	if request.method == 'POST':
+
+		form = OrderForm(request.POST, instance=order)
+		if form.is_valid():
+			form.save()
+			return redirect('/')
+
+	context = {'form':form}
+	return render(request, 'accounts/order_form.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def deleteOrder(request, pk):
+	order = Order.objects.get(id=pk)
+	if request.method == "POST":
+		order.delete()
+		return redirect('/')
+
+	context = {'item':order}
+	return render(request, 'accounts/delete.html', context)
+	
